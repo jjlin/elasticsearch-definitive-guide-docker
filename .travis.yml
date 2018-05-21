@@ -1,0 +1,52 @@
+# We're only using shell scripts and utilities.
+# The `bash` option appears to be undocumented, though;
+# see <https://github.com/travis-ci/docs-travis-ci-com/issues/910>.
+language: bash
+
+# Enable Docker.
+sudo: required
+services:
+  - docker
+
+# Update to the latest `docker-ce` package.
+#
+# See <https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json>
+# for the list of package sources recognized by default. 
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+# Skip clone the `elasticsearch-definitive-guide` submodule.
+# This will be done as part of the build script for testability
+# outside of the Travis CI environment.
+git:
+  submodules: false
+
+# Pull the Docker image needed for this build.
+install:
+  - docker info
+  - docker pull jjlin/edg-epub-mobi
+
+script:
+  - pwd
+  - ls -al
+  - docker run --volume $(pwd):/root/jjlin/edg-epub-mobi --name edg jjlin/edg-epub-mobi
+  - docker cp edg:/root/jjlin/edg-epub-mobi/edg.epub .
+  - docker cp edg:/root/jjlin/edg-epub-mobi/edg.mobi .
+  - ls -al
+
+# Docs: <https://docs.travis-ci.com/user/deployment/releases/>
+deploy:
+  provider: releases
+  on:
+    repo: jjlin/edg-epub-mobi
+    tags: true
+  file:
+    - edg.epub
+    - edg.mobi
+  body: Built from the `master` branch of `elastic/elasticsearch-definitive-guide`
+  overwrite: true
+  skip_cleanup: true
+  api_key:
+    secure: Bnb5pQEQ61GwwiaTZ8XKt1L7SaCu6PgnO287T+HzWx9hBOcS5eCt6VxofPqNNB3n6bwpT2yQSp+8+Pb5g51I2+bVyyMsxnrDXUaqlup7hQbaHVo9sInvgzv/pQUBBRuRZEQJvySkLe4hyF9veKSIdu7Ec+/M5fza6ixpE5C8/NdWFIFOy/xwiY4Bww5vVyYx8dxk7mmLZOtURlrru8SGnujroeohADaTqAiLT9IfuFu44YRGEX70lVTLvUy4wKkmSyirbsZC03/fkYycUaKYH2VTCoKZnBh/yqDhlWGd6GlHwi/GKyv8v61OKiWU5fqOkxRWPWx5l/L137d9eigCnDiWksgLUjdhLclQCJbcGt7w/OyZCjsZIfO71s5PIIUK0kzTR0PmAVnpsUyc79YdHQibSIGEV7R6KU00dPtGfLuW0OfaLNAIM6XO/nRLXaH8Uxl/R7+3A6/C6x0i5dlixazK6qGhgk2keQY9rac/voJfAcGBPSgW47MPvFIRV6pvx3AE9+Ehufp4fau+o1mApEowQ85VcAHspdGZc2POWQiSk/bE9MlRKtVFvKrgZNAb1BLC5FY5nYGgbIxxiFXWyJdkDUFikOHyEioAMU7vT21fnJKx2iPyiPBdj9v9SFVE98fyWT84aadSMjuocqbHUUklrMfGVx8SAI7xyHWGXzo=
