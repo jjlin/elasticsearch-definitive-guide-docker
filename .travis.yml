@@ -1,0 +1,47 @@
+# We're only using shell scripts and utilities.
+# The `bash` option appears to be undocumented, though;
+# see <https://github.com/travis-ci/docs-travis-ci-com/issues/910>.
+language: bash
+
+# Enable Docker.
+sudo: required
+services:
+  - docker
+
+# Update to the latest `docker-ce` package.
+#
+# See <https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json>
+# for the list of package sources recognized by default. 
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+# Skip cloning of the `elasticsearch-definitive-guide` submodule.
+# This will be done as part of the build script (for testability
+# outside of the Travis CI environment).
+git:
+  submodules: false
+
+# Pull the Docker image needed for this build.
+install:
+  - docker info
+  - docker pull jjlin/edg-epub-mobi
+
+script:
+  - pwd
+  - docker run --volume $(pwd):/root/jjlin/edg-epub-mobi --name edg jjlin/edg-epub-mobi
+  - ls -al
+  - ls -al gh-pages
+
+# Docs: <https://docs.travis-ci.com/user/deployment/pages/>
+deploy:
+  provider: pages
+  on:
+    repo: jjlin/edg-epub-mobi
+  local-dir: gh-pages
+  target-branch: gh-pages
+  keep-history: false
+  verbose: true
+  skip_cleanup: true
+  github-token: $GITHUB_TOKEN
