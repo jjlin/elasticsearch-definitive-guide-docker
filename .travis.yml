@@ -23,10 +23,10 @@ addons:
 git:
   submodules: false
 
-# Pull the Docker image needed for this build.
+# Build the Docker image needed for this build.
 install:
   - docker info
-  - docker pull jjlin/edg-epub-mobi
+  - docker build --tag jjlin/edg-epub-mobi .
 
 script:
   - pwd
